@@ -34,8 +34,7 @@ export function Impressao({ api }: ImpressaoProps) {
   const mob = vw < 640
   const narrow = vw < 960
   const list = cards ?? []
-  const sz = SIZE_MAP[size]
-  const verso = includeBack && previewFace === 'verso'
+  const previewVerso = includeBack && previewFace === 'verso'
   const ordered = orderedCards(list)
 
   return (
@@ -108,7 +107,7 @@ export function Impressao({ api }: ImpressaoProps) {
 
         <Panel
           title="Verso com gesto"
-          subtitle="Imprime um verso com a ilustração do gesto de cada palavra (o vídeo fica acessível por QR)."
+          subtitle="Imprime uma segunda página com a ilustração do gesto de cada palavra (o vídeo fica acessível por QR). Para impressão duplex."
         >
           <Toggle
             on={includeBack}
@@ -146,56 +145,124 @@ export function Impressao({ api }: ImpressaoProps) {
         </div>
       </div>
 
-      <div
+      {/* Interactive preview. Visible on screen only; hidden when printing. */}
+      <Sheet
         className="print-sheet"
+        cards={ordered}
+        size={size}
+        contrast={contrast}
+        verso={previewVerso}
+        mob={mob}
+        narrow={narrow}
+        header={
+          <>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#6c5fa6' }}>Picta</span>
+            {includeBack && (
+              <div style={{ display: 'inline-flex', background: '#efedf6', borderRadius: 9, padding: 3, gap: 2 }}>
+                <FaceTab on={!previewVerso} onClick={() => setPreviewFace('frente')} label="Frente" />
+                <FaceTab on={previewVerso} onClick={() => setPreviewFace('verso')} label="Verso" />
+              </div>
+            )}
+            <span style={{ fontSize: 11, color: '#b0aaba' }}>{list.length} cartões</span>
+          </>
+        }
+      />
+
+      {/* Print-only sheets. Always rendered when there are cards, regardless of
+          previewFace, so that window.print() always emits the full front and
+          (when includeBack) back, aligned in the same card order for duplex. */}
+      <Sheet
+        className="print-front-sheet"
+        cards={ordered}
+        size={size}
+        contrast={contrast}
+        verso={false}
+        mob={mob}
+        narrow={narrow}
+        header={
+          <>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#6c5fa6' }}>Picta</span>
+            <span style={{ fontSize: 11, color: '#b0aaba' }}>frente · {list.length} cartões</span>
+          </>
+        }
+      />
+      {includeBack && (
+        <Sheet
+          className="print-back-sheet"
+          cards={ordered}
+          size={size}
+          contrast={contrast}
+          verso
+          mob={mob}
+          narrow={narrow}
+          header={
+            <>
+              <span style={{ fontSize: 14, fontWeight: 800, color: '#6c5fa6' }}>Picta</span>
+              <span style={{ fontSize: 11, color: '#b0aaba' }}>verso · {list.length} cartões</span>
+            </>
+          }
+        />
+      )}
+    </div>
+  )
+}
+
+interface SheetProps {
+  className: string
+  cards: Card[]
+  size: SizeKey
+  contrast: boolean
+  verso: boolean
+  mob: boolean
+  narrow: boolean
+  header: React.ReactNode
+}
+
+function Sheet({ className, cards, size, contrast, verso, mob, narrow, header }: SheetProps) {
+  const sz = SIZE_MAP[size]
+  return (
+    <div
+      className={className}
+      style={{
+        background: '#fff',
+        borderRadius: 6,
+        boxShadow: '0 8px 30px rgba(40,30,60,.14)',
+        padding: mob ? 20 : 34,
+        ...(narrow ? {} : { aspectRatio: '1/1.414' }),
+      }}
+    >
+      <div
         style={{
-          background: '#fff',
-          borderRadius: 6,
-          boxShadow: '0 8px 30px rgba(40,30,60,.14)',
-          padding: mob ? 20 : 34,
-          ...(narrow ? {} : { aspectRatio: '1/1.414' }),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 20,
+          paddingBottom: 14,
+          borderBottom: '1px solid #ece8f2',
+          gap: 12,
+          flexWrap: 'wrap',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 20,
-            paddingBottom: 14,
-            borderBottom: '1px solid #ece8f2',
-            gap: 12,
-            flexWrap: 'wrap',
-          }}
-        >
-          <span style={{ fontSize: 14, fontWeight: 800, color: '#6c5fa6' }}>Picta</span>
-          {includeBack && (
-            <div style={{ display: 'inline-flex', background: '#efedf6', borderRadius: 9, padding: 3, gap: 2 }}>
-              <FaceTab on={!verso} onClick={() => setPreviewFace('frente')} label="Frente" />
-              <FaceTab on={verso} onClick={() => setPreviewFace('verso')} label="Verso" />
-            </div>
-          )}
-          <span style={{ fontSize: 11, color: '#b0aaba' }}>{list.length} cartões</span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${sz.cols},1fr)`, gap: 12 }}>
-          {ordered.map((c) => (
-            <SheetCard key={c.id} card={c} size={size} contrast={contrast} verso={verso} />
-          ))}
-        </div>
-        <div
-          style={{
-            marginTop: 18,
-            paddingTop: 12,
-            borderTop: '1px solid #ece8f2',
-            display: 'flex',
-            justifyContent: 'space-between',
-            fontSize: 8,
-            color: '#b8b2c4',
-          }}
-        >
-          <span>Picta · comunicar em cartões</span>
-          <span>Pictogramas: ARASAAC (Sergio Palao) · CC BY-NC-SA</span>
-        </div>
+        {header}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${sz.cols},1fr)`, gap: 12 }}>
+        {cards.map((c) => (
+          <SheetCard key={c.id} card={c} size={size} contrast={contrast} verso={verso} />
+        ))}
+      </div>
+      <div
+        style={{
+          marginTop: 18,
+          paddingTop: 12,
+          borderTop: '1px solid #ece8f2',
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: 8,
+          color: '#b8b2c4',
+        }}
+      >
+        <span>Picta · comunicar em cartões</span>
+        <span>Pictogramas: ARASAAC (Sergio Palao) · CC BY-NC-SA</span>
       </div>
     </div>
   )

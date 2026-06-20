@@ -57,6 +57,12 @@ button:focus-visible {
   }
 }
 
+/* On screen, print-only sheets stay hidden. */
+.print-front-sheet,
+.print-back-sheet {
+  display: none;
+}
+
 @media print {
   @page {
     size: A4;
@@ -87,11 +93,32 @@ button:focus-visible {
     margin: 0 !important;
     max-width: none !important;
   }
+  /* Hide the interactive preview when printing. The actual print output
+     comes from .print-front-sheet and .print-back-sheet below. */
   .print-sheet {
+    display: none !important;
+  }
+  .print-front-sheet,
+  .print-back-sheet {
+    display: block !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     aspect-ratio: auto !important;
     padding: 0 !important;
     max-width: none !important;
+    /* Faixa colorida da função tem de ir para o papel. Sem isto,
+       o browser ignora os backgrounds para poupar tinta. */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .print-front-sheet *,
+  .print-back-sheet * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  /* Verso starts on a new page so duplex aligns. */
+  .print-back-sheet {
+    break-before: page;
+    page-break-before: always;
   }
 }
