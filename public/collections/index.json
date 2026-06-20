@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "collections": [
+    {
+      "id": "primeiras-palavras",
+      "title": "Primeiras palavras por função",
+      "description": "Vocabulário nuclear para arrancar, organizado por função comunicativa.",
+      "language": "pt-PT",
+      "author": "Equipa Picta",
+      "cardCount": 6
+    },
+    {
+      "id": "rotinas-de-casa",
+      "title": "Rotinas de casa",
+      "description": "Banho, dormir, vestir, passear. O dia a dia em casa.",
+      "language": "pt-PT",
+      "author": "Equipa Picta",
+      "cardCount": 4
+    },
+    {
+      "id": "creche",
+      "title": "Creche",
+      "description": "Actividades e pessoas do dia na creche.",
+      "language": "pt-PT",
+      "author": "Equipa Picta",
+      "cardCount": 5
+    },
+    {
+      "id": "emocoes-e-conforto",
+      "title": "Emoções e conforto",
+      "description": "Estados básicos e pedidos de conforto.",
+      "language": "pt-PT",
+      "author": "Equipa Picta",
+      "cardCount": 5
+    }
+  ]
+}

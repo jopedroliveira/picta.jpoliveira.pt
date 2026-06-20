@@ -5,13 +5,11 @@ export type Screen =
   | 'entrada'
   | 'revisao'
   | 'impressao'
-  | 'auth'
   | 'colecoes'
-  | 'comunidade'
+  | 'globais'
 
 export type SizeKey = 'grande' | 'medio' | 'pequeno'
 export type PreviewFace = 'frente' | 'verso'
-export type AuthMode = 'login' | 'signup'
 export type EditorTab = 'picto' | 'foto'
 
 export interface PictoCandidate {
@@ -34,12 +32,6 @@ export interface Card {
   gestureVideoName: string | null
 }
 
-export interface User {
-  name: string
-  initials: string
-  provider: 'google' | 'apple' | 'email'
-}
-
 export interface Collection {
   id: string
   name: string
@@ -47,5 +39,33 @@ export interface Collection {
   wordsText: string
   cards: Card[]
   savedAt: number
-  shared: boolean
+}
+
+export interface GlobalCollectionMeta {
+  id: string
+  title: string
+  description: string
+  language: string
+  author: string
+  cardCount: number
+}
+
+export interface GlobalCollectionIndex {
+  version: number
+  collections: GlobalCollectionMeta[]
+}
+
+export interface GlobalCollectionCard {
+  word: string
+  arasaacId: number
+  function: FuncKey
+}
+
+export interface GlobalCollection {
+  id: string
+  title: string
+  description: string
+  language: string
+  author: string
+  cards: GlobalCollectionCard[]
 }

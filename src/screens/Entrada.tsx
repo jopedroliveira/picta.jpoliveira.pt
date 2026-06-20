@@ -117,7 +117,7 @@ export function Entrada({ api }: EntradaProps) {
           Usar exemplo: rotina da manhã
         </button>
         <button
-          onClick={() => setScreen('comunidade')}
+          onClick={() => setScreen('globais')}
           style={{
             background: '#fff',
             border: '1px solid #d7d0e4',
@@ -130,7 +130,7 @@ export function Entrada({ api }: EntradaProps) {
             fontFamily: 'inherit',
           }}
         >
-          Explorar a comunidade
+          Ver coleções globais
         </button>
       </div>
 

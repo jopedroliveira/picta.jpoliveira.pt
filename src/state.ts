@@ -1,28 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { searchPictos } from './arasaac'
+import { pictoUrl, searchPictos } from './arasaac'
 import { CTX, FUNCS, guessCtx, guessFunc } from './theme'
 import type {
-  AuthMode,
   Card,
   Collection,
   EditorTab,
+  GlobalCollection,
+  GlobalCollectionIndex,
+  GlobalCollectionMeta,
   PreviewFace,
   Screen,
   SizeKey,
-  User,
 } from './types'
 
-const LS_USER = 'picta_user'
 const LS_COLLECTIONS = 'picta_collections'
-
-function loadUser(): User | null {
-  try {
-    const raw = localStorage.getItem(LS_USER)
-    return raw ? (JSON.parse(raw) as User) : null
-  } catch {
-    return null
-  }
-}
 
 function loadCollections(): Collection[] {
   try {
@@ -32,15 +23,6 @@ function loadCollections(): Collection[] {
     return Array.isArray(arr) ? arr : []
   } catch {
     return []
-  }
-}
-
-function persistUser(user: User | null) {
-  try {
-    if (user) localStorage.setItem(LS_USER, JSON.stringify(user))
-    else localStorage.removeItem(LS_USER)
-  } catch {
-    /* ignore */
   }
 }
 
@@ -72,6 +54,25 @@ export function buildCards(wordsText: string): Card[] {
     }))
 }
 
+// Build editable Card[] from a global collection. The arasaacId becomes the
+// first (and currently only) pictoCandidate, so the card is already showing
+// the curator's chosen picto without an extra round-trip.
+function cardsFromGlobal(g: GlobalCollection): Card[] {
+  return g.cards.map((c, i): Card => ({
+    id: i,
+    word: c.word,
+    func: c.function,
+    ctx: guessCtx(c.word),
+    source: 'picto',
+    pictoIndex: 0,
+    pictoCandidates: [{ id: c.arasaacId, url: pictoUrl(c.arasaacId), keyword: c.word }],
+    photoUrl: null,
+    gestureImg: null,
+    gestureVideoUrl: null,
+    gestureVideoName: null,
+  }))
+}
+
 export interface UsePictaApi {
   // state
   screen: Screen
@@ -83,17 +84,19 @@ export interface UsePictaApi {
   previewFace: PreviewFace
   editingId: number | null
   editorTab: EditorTab
-  user: User | null
   collections: Collection[]
   currentCollectionId: string | null
   collectionName: string
-  authMode: AuthMode
-  authName: string
-  authEmail: string
-  shareFor: string | null
-  copied: boolean
   justSaved: boolean
   vw: number
+
+  // global collections
+  globalIndex: GlobalCollectionMeta[] | null
+  globalIndexError: string | null
+  previewingGlobalId: string | null
+  previewingGlobal: GlobalCollection | null
+  previewingGlobalLoading: boolean
+  previewingGlobalError: string | null
 
   // setters
   setScreen: (s: Screen) => void
@@ -104,11 +107,6 @@ export interface UsePictaApi {
   setPreviewFace: (f: PreviewFace) => void
   setEditingId: (id: number | null) => void
   setEditorTab: (t: EditorTab) => void
-  setAuthMode: (m: AuthMode) => void
-  setAuthName: (n: string) => void
-  setAuthEmail: (e: string) => void
-  setShareFor: (id: string | null) => void
-  setCopied: (b: boolean) => void
 
   // actions
   go: (screen: Screen) => void
@@ -116,13 +114,12 @@ export interface UsePictaApi {
   loadExample: () => void
   openEditor: (id: number) => void
   closeEditor: () => void
-  loginAs: (provider: User['provider']) => void
-  logout: () => void
   saveCollection: () => void
   openCollection: (col: Collection) => void
   deleteCollection: (id: string) => void
-  toggleShared: (id: string) => void
-  useCommunity: (col: { name: string; words: string[] }) => void
+  openGlobalPreview: (id: string) => void
+  closeGlobalPreview: () => void
+  copiarParaAsMinhas: (g: GlobalCollection) => void
 }
 
 export function usePicta(): UsePictaApi {
@@ -137,25 +134,39 @@ export function usePicta(): UsePictaApi {
   const [previewFace, setPreviewFace] = useState<PreviewFace>('frente')
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editorTab, setEditorTab] = useState<EditorTab>('picto')
-  const [user, setUser] = useState<User | null>(() => loadUser())
   const [collections, setCollections] = useState<Collection[]>(() => loadCollections())
   const [currentCollectionId, setCurrentCollectionId] = useState<string | null>(null)
   const [collectionName, setCollectionName] = useState<string>('')
-  const [authMode, setAuthMode] = useState<AuthMode>('login')
-  const [authName, setAuthName] = useState<string>('')
-  const [authEmail, setAuthEmail] = useState<string>('')
-  const [shareFor, setShareFor] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
   const [justSaved, setJustSaved] = useState(false)
   const [vw, setVw] = useState<number>(() =>
     typeof window !== 'undefined' ? window.innerWidth : 1100,
   )
+
+  // global collections
+  const [globalIndex, setGlobalIndex] = useState<GlobalCollectionMeta[] | null>(null)
+  const [globalIndexError, setGlobalIndexError] = useState<string | null>(null)
+  const [previewingGlobalId, setPreviewingGlobalId] = useState<string | null>(null)
+  const [previewingGlobal, setPreviewingGlobal] = useState<GlobalCollection | null>(null)
+  const [previewingGlobalLoading, setPreviewingGlobalLoading] = useState(false)
+  const [previewingGlobalError, setPreviewingGlobalError] = useState<string | null>(null)
 
   useEffect(() => {
     const handler = () => setVw(window.innerWidth)
     window.addEventListener('resize', handler)
     return () => window.removeEventListener('resize', handler)
   }, [])
+
+  // Fetch the index lazily the first time the user lands on the gallery
+  useEffect(() => {
+    if (screen !== 'globais' || globalIndex !== null || globalIndexError !== null) return
+    fetch('/collections/index.json')
+      .then((r) => {
+        if (!r.ok) throw new Error('HTTP ' + r.status)
+        return r.json() as Promise<GlobalCollectionIndex>
+      })
+      .then((data) => setGlobalIndex(data.collections ?? []))
+      .catch((e) => setGlobalIndexError(String(e)))
+  }, [screen, globalIndex, globalIndexError])
 
   const setWordsText = useCallback((text: string) => {
     setWordsTextRaw(text)
@@ -224,36 +235,7 @@ export function usePicta(): UsePictaApi {
 
   const closeEditor = useCallback(() => setEditingId(null), [])
 
-  const loginAs = useCallback(
-    (provider: User['provider']) => {
-      const name = authName.trim() || 'Ana Ribeiro'
-      const initials = name
-        .split(/\s+/)
-        .map((p) => p[0])
-        .slice(0, 2)
-        .join('')
-        .toUpperCase()
-      const u: User = { name, initials, provider }
-      setUser(u)
-      persistUser(u)
-      setScreen('colecoes')
-    },
-    [authName],
-  )
-
-  const logout = useCallback(() => {
-    setUser(null)
-    setScreen('entrada')
-    setCurrentCollectionId(null)
-    persistUser(null)
-  }, [])
-
   const saveCollection = useCallback(() => {
-    if (!user) {
-      setScreen('auth')
-      setAuthMode('login')
-      return
-    }
     const current = cards ?? buildCards(wordsText)
     const words = current.map((c) => c.word)
     const name = (collectionName || '').trim() || words[0] || 'Coleção'
@@ -261,15 +243,7 @@ export function usePicta(): UsePictaApi {
     setCollections((prev) => {
       const existing = currentCollectionId != null ? prev.findIndex((c) => c.id === currentCollectionId) : -1
       const id = currentCollectionId ?? 'col_' + now
-      const rec: Collection = {
-        id,
-        name,
-        words,
-        wordsText,
-        cards: current,
-        savedAt: now,
-        shared: existing >= 0 ? prev[existing].shared : false,
-      }
+      const rec: Collection = { id, name, words, wordsText, cards: current, savedAt: now }
       const next = existing >= 0 ? prev.map((c, i) => (i === existing ? rec : c)) : [rec, ...prev]
       persistCollections(next)
       setCurrentCollectionId(id)
@@ -277,7 +251,7 @@ export function usePicta(): UsePictaApi {
     })
     setJustSaved(true)
     setTimeout(() => setJustSaved(false), 1800)
-  }, [cards, collectionName, currentCollectionId, user, wordsText])
+  }, [cards, collectionName, currentCollectionId, wordsText])
 
   const openCollection = useCallback((col: Collection) => {
     setWordsTextRaw(col.wordsText || col.words.join('\n'))
@@ -299,20 +273,46 @@ export function usePicta(): UsePictaApi {
     [currentCollectionId],
   )
 
-  const toggleShared = useCallback((id: string) => {
-    setCollections((prev) => {
-      const next = prev.map((c) => (c.id === id ? { ...c, shared: !c.shared } : c))
-      persistCollections(next)
-      return next
-    })
+  const openGlobalPreview = useCallback(
+    (id: string) => {
+      setPreviewingGlobalId(id)
+      setPreviewingGlobalError(null)
+      setPreviewingGlobal(null)
+      setPreviewingGlobalLoading(true)
+      fetch(`/collections/${id}.json`)
+        .then((r) => {
+          if (!r.ok) throw new Error('HTTP ' + r.status)
+          return r.json() as Promise<GlobalCollection>
+        })
+        .then((data) => {
+          setPreviewingGlobal(data)
+          setPreviewingGlobalLoading(false)
+        })
+        .catch((e) => {
+          setPreviewingGlobalError(String(e))
+          setPreviewingGlobalLoading(false)
+        })
+    },
+    [],
+  )
+
+  const closeGlobalPreview = useCallback(() => {
+    setPreviewingGlobalId(null)
+    setPreviewingGlobal(null)
+    setPreviewingGlobalError(null)
+    setPreviewingGlobalLoading(false)
   }, [])
 
-  const useCommunity = useCallback((col: { name: string; words: string[] }) => {
-    setWordsTextRaw(col.words.join('\n'))
-    setCards(null)
+  const copiarParaAsMinhas = useCallback((g: GlobalCollection) => {
+    const newCards = cardsFromGlobal(g)
+    const words = newCards.map((c) => c.word)
+    setWordsTextRaw(words.join('\n'))
+    setCards(newCards)
     setCurrentCollectionId(null)
-    setCollectionName(col.name + ' (cópia)')
-    setScreen('entrada')
+    setCollectionName(g.title + ' (cópia)')
+    setPreviewingGlobalId(null)
+    setPreviewingGlobal(null)
+    setScreen('revisao')
   }, [])
 
   return useMemo<UsePictaApi>(
@@ -326,17 +326,17 @@ export function usePicta(): UsePictaApi {
       previewFace,
       editingId,
       editorTab,
-      user,
       collections,
       currentCollectionId,
       collectionName,
-      authMode,
-      authName,
-      authEmail,
-      shareFor,
-      copied,
       justSaved,
       vw,
+      globalIndex,
+      globalIndexError,
+      previewingGlobalId,
+      previewingGlobal,
+      previewingGlobalLoading,
+      previewingGlobalError,
       setScreen,
       setWordsText,
       setSize,
@@ -345,23 +345,17 @@ export function usePicta(): UsePictaApi {
       setPreviewFace,
       setEditingId,
       setEditorTab,
-      setAuthMode,
-      setAuthName,
-      setAuthEmail,
-      setShareFor,
-      setCopied,
       go,
       updateCard,
       loadExample,
       openEditor,
       closeEditor,
-      loginAs,
-      logout,
       saveCollection,
       openCollection,
       deleteCollection,
-      toggleShared,
-      useCommunity,
+      openGlobalPreview,
+      closeGlobalPreview,
+      copiarParaAsMinhas,
     }),
     [
       screen,
@@ -373,40 +367,32 @@ export function usePicta(): UsePictaApi {
       previewFace,
       editingId,
       editorTab,
-      user,
       collections,
       currentCollectionId,
       collectionName,
-      authMode,
-      authName,
-      authEmail,
-      shareFor,
-      copied,
       justSaved,
       vw,
+      globalIndex,
+      globalIndexError,
+      previewingGlobalId,
+      previewingGlobal,
+      previewingGlobalLoading,
+      previewingGlobalError,
       setWordsText,
       go,
       updateCard,
       loadExample,
       openEditor,
       closeEditor,
-      loginAs,
-      logout,
       saveCollection,
       openCollection,
       deleteCollection,
-      toggleShared,
-      useCommunity,
+      openGlobalPreview,
+      closeGlobalPreview,
+      copiarParaAsMinhas,
     ],
   )
 }
-
-export const COMMUNITY_FIXTURES = [
-  { id: 'c1', name: 'Rotina da manhã', author: 'Equipa Picta', words: ['bom dia', 'leite', 'pão', 'vestir', 'dentes', 'vamos'] },
-  { id: 'c2', name: 'Pedidos na sala', author: 'CRI de Aveiro', words: ['quero', 'mais', 'ajuda', 'acabou', 'água'] },
-  { id: 'c3', name: 'Emoções básicas', author: 'Terapeuta Sofia', words: ['feliz', 'triste', 'zangado', 'cansado', 'assustado', 'calmo'] },
-  { id: 'c4', name: 'Hora da refeição', author: 'JI do Sol', words: ['comer', 'beber', 'mais', 'não quero', 'obrigado'] },
-]
 
 export function fmtDate(ts: number): string {
   try {

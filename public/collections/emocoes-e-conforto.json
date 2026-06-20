@@ -1,0 +1,14 @@
+{
+  "id": "emocoes-e-conforto",
+  "title": "Emoções e conforto",
+  "description": "Estados básicos e pedidos de conforto.",
+  "language": "pt-PT",
+  "author": "Equipa Picta",
+  "cards": [
+    { "word": "contente", "arasaacId": 35547, "function": "comentar" },
+    { "word": "triste",   "arasaacId": 35545, "function": "comentar" },
+    { "word": "medo",     "arasaacId": 10261, "function": "comentar" },
+    { "word": "colo",     "arasaacId": 4550,  "function": "pedir" },
+    { "word": "dói",      "arasaacId": 30620, "function": "comentar" }
+  ]
+}

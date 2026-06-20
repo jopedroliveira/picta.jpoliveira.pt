@@ -1,0 +1,13 @@
+{
+  "id": "rotinas-de-casa",
+  "title": "Rotinas de casa",
+  "description": "Banho, dormir, vestir, passear. O dia a dia em casa.",
+  "language": "pt-PT",
+  "author": "Equipa Picta",
+  "cards": [
+    { "word": "banho",   "arasaacId": 38587, "function": "pedir" },
+    { "word": "dormir",  "arasaacId": 6479,  "function": "pedir" },
+    { "word": "vestir",  "arasaacId": 6627,  "function": "comentar" },
+    { "word": "passear", "arasaacId": 29951, "function": "pedir" }
+  ]
+}

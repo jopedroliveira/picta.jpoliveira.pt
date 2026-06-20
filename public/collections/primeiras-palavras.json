@@ -1,0 +1,15 @@
+{
+  "id": "primeiras-palavras",
+  "title": "Primeiras palavras por função",
+  "description": "Vocabulário nuclear para arrancar, organizado por função comunicativa.",
+  "language": "pt-PT",
+  "author": "Equipa Picta",
+  "cards": [
+    { "word": "mais",   "arasaacId": 3220,  "function": "pedir" },
+    { "word": "quero",  "arasaacId": 5441,  "function": "pedir" },
+    { "word": "não",    "arasaacId": 5526,  "function": "recusar" },
+    { "word": "acabou", "arasaacId": 28429, "function": "recusar" },
+    { "word": "este",   "arasaacId": 7095,  "function": "escolher" },
+    { "word": "gosto",  "arasaacId": 37826, "function": "comentar" }
+  ]
+}

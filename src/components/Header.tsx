@@ -14,7 +14,7 @@ interface HeaderProps {
 }
 
 export function Header({ api }: HeaderProps) {
-  const { screen, vw, cards, user, justSaved, saveCollection, go, setScreen } = api
+  const { screen, vw, cards, justSaved, saveCollection, go, setScreen } = api
   const mob = vw < 640
   const showStepLabel = vw >= 820
   const reached = STEPS.findIndex((s) => s.key === screen)
@@ -148,68 +148,41 @@ export function Header({ api }: HeaderProps) {
             {justSaved ? 'Guardado ✓' : mob ? 'Guardar' : 'Guardar coleção'}
           </button>
         )}
-        {user ? (
-          <>
-            <button
-              onClick={() => setScreen('colecoes')}
-              style={{
-                flex: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                fontWeight: 700,
-                borderRadius: 10,
-                padding: '9px 14px',
-                fontSize: 14,
-                background: 'transparent',
-                color: '#6f6a7d',
-                display: mob ? 'none' : 'inline-flex',
-              }}
-            >
-              Coleções
-            </button>
-            <button
-              onClick={() => setScreen('colecoes')}
-              title={user.name}
-              style={{
-                flex: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                fontWeight: 700,
-                width: 38,
-                height: 38,
-                borderRadius: '50%',
-                background: '#6c5fa6',
-                color: '#fff',
-                fontSize: 14,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {user.initials}
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => setScreen('auth')}
-            style={{
-              flex: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontWeight: 700,
-              borderRadius: 10,
-              padding: '9px 16px',
-              fontSize: 14,
-              background: '#6c5fa6',
-              color: '#fff',
-            }}
-          >
-            Entrar
-          </button>
-        )}
+        <button
+          onClick={() => setScreen('colecoes')}
+          style={{
+            flex: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            fontWeight: 700,
+            borderRadius: 10,
+            padding: '9px 14px',
+            fontSize: 14,
+            background: screen === 'colecoes' ? '#ece8f2' : 'transparent',
+            color: '#6f6a7d',
+          }}
+        >
+          {mob ? '☰' : 'Coleções'}
+        </button>
+        <button
+          onClick={() => setScreen('globais')}
+          style={{
+            flex: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            fontWeight: 700,
+            borderRadius: 10,
+            padding: '9px 14px',
+            fontSize: 14,
+            background: screen === 'globais' ? '#6c5fa6' : '#f1eef8',
+            color: screen === 'globais' ? '#fff' : '#6c5fa6',
+            display: mob ? 'none' : 'inline-flex',
+          }}
+        >
+          Coleções globais
+        </button>
       </div>
     </header>
   )

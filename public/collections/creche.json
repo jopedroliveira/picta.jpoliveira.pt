@@ -1,0 +1,14 @@
+{
+  "id": "creche",
+  "title": "Creche",
+  "description": "Actividades e pessoas do dia na creche.",
+  "language": "pt-PT",
+  "author": "Equipa Picta",
+  "cards": [
+    { "word": "cantar",  "arasaacId": 6960,  "function": "pedir" },
+    { "word": "pintar",  "arasaacId": 2348,  "function": "pedir" },
+    { "word": "sentar",  "arasaacId": 6611,  "function": "comentar" },
+    { "word": "brincar", "arasaacId": 23392, "function": "pedir" },
+    { "word": "amigos",  "arasaacId": 25790, "function": "comentar" }
+  ]
+}

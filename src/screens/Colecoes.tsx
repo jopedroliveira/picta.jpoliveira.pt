@@ -6,16 +6,7 @@ interface ColecoesProps {
 }
 
 export function Colecoes({ api }: ColecoesProps) {
-  const {
-    user,
-    collections,
-    vw,
-    setWordsText,
-    setScreen,
-    openCollection,
-    deleteCollection,
-    logout,
-  } = api
+  const { collections, vw, setWordsText, setScreen, openCollection, deleteCollection } = api
   const mob = vw < 640
   const narrow = vw < 960
 
@@ -41,18 +32,18 @@ export function Colecoes({ api }: ColecoesProps) {
               color: '#9a93aa',
             }}
           >
-            {user?.name ?? 'Conta'}
+            As suas coleções
           </div>
           <h1 style={{ fontSize: mob ? 25 : 30, fontWeight: 800, letterSpacing: '-0.02em', margin: '8px 0 8px' }}>
-            As suas coleções
+            Guardadas neste dispositivo
           </h1>
           <p style={{ fontSize: 15, color: '#6f6a7d', margin: 0 }}>
-            Guardadas neste dispositivo. Abra para continuar a editar ou partilhe com a comunidade.
+            Tudo o que crias fica em `localStorage` e nunca sai daqui. Abre uma coleção para continuar a editar.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button
-            onClick={() => setScreen('comunidade')}
+            onClick={() => setScreen('globais')}
             style={{
               background: '#fff',
               border: '1px solid #d7d0e4',
@@ -65,7 +56,7 @@ export function Colecoes({ api }: ColecoesProps) {
               fontFamily: 'inherit',
             }}
           >
-            Comunidade
+            Coleções globais
           </button>
           <button
             onClick={() => {
@@ -101,27 +92,45 @@ export function Colecoes({ api }: ColecoesProps) {
         >
           <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Ainda não guardou nada</div>
           <p style={{ fontSize: 14, color: '#6f6a7d', margin: '0 0 18px' }}>
-            Crie uma coleção de cartões e guarde-a para reutilizar e partilhar.
+            Crie uma coleção do zero, ou copie uma das coleções globais para começar.
           </p>
-          <button
-            onClick={() => {
-              setWordsText('')
-              setScreen('entrada')
-            }}
-            style={{
-              background: '#6c5fa6',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 11,
-              padding: '12px 22px',
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-            }}
-          >
-            + Nova coleção
-          </button>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setScreen('globais')}
+              style={{
+                background: '#fff',
+                border: '1px solid #d7d0e4',
+                borderRadius: 11,
+                padding: '12px 20px',
+                fontSize: 15,
+                fontWeight: 700,
+                color: '#6c5fa6',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              Ver coleções globais
+            </button>
+            <button
+              onClick={() => {
+                setWordsText('')
+                setScreen('entrada')
+              }}
+              style={{
+                background: '#6c5fa6',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 11,
+                padding: '12px 22px',
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              + Nova coleção
+            </button>
+          </div>
         </div>
       ) : (
         <div
@@ -184,23 +193,7 @@ export function Colecoes({ api }: ColecoesProps) {
                   borderTop: '1px solid #ece8f2',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 16, fontWeight: 700 }}>{col.name}</span>
-                  {col.shared && (
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: '#3E8E5A',
-                        background: '#e4f1e9',
-                        borderRadius: 6,
-                        padding: '2px 7px',
-                      }}
-                    >
-                      Partilhada
-                    </span>
-                  )}
-                </div>
+                <span style={{ fontSize: 16, fontWeight: 700 }}>{col.name}</span>
                 <div style={{ fontSize: 12, color: '#9a93aa' }}>
                   {col.words.length} cartões · {fmtDate(col.savedAt)}
                 </div>
@@ -224,29 +217,12 @@ export function Colecoes({ api }: ColecoesProps) {
                   Abrir
                 </button>
                 <button
-                  onClick={() => api.setShareFor(col.id)}
-                  style={{
-                    flex: 1,
-                    border: 'none',
-                    background: '#faf9fc',
-                    padding: 11,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: '#6c5fa6',
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    borderRight: '1px solid #ece8f2',
-                  }}
-                >
-                  Partilhar
-                </button>
-                <button
                   onClick={() => deleteCollection(col.id)}
                   style={{
                     flex: 'none',
                     border: 'none',
                     background: '#faf9fc',
-                    padding: '11px 14px',
+                    padding: '11px 18px',
                     fontSize: 13,
                     fontWeight: 600,
                     color: '#C0453B',
@@ -254,29 +230,13 @@ export function Colecoes({ api }: ColecoesProps) {
                     fontFamily: 'inherit',
                   }}
                 >
-                  ✕
+                  Apagar
                 </button>
               </div>
             </div>
           ))}
         </div>
       )}
-
-      <div style={{ marginTop: 32 }}>
-        <button
-          onClick={logout}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#9a93aa',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 13,
-          }}
-        >
-          Terminar sessão
-        </button>
-      </div>
     </div>
   )
 }
