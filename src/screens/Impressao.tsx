@@ -1,4 +1,8 @@
-import { PictoMini, PrinterIcon, QrPlaceholder } from '../icons'
+import { useSyncExternalStore } from 'react'
+import { PictoMini, PrinterIcon } from '../icons'
+import { QrSvg } from '../components/QrSvg'
+import { resolveQrTarget } from '../gestureUrl'
+import { getLgpWordsSnapshot, startLoadLgpWords, subscribeLgpWords } from '../lgp'
 import type { UsePictaApi } from '../state'
 import { FUNCS, SIZE_LABELS, SIZE_MAP } from '../theme'
 import type { Card, FuncKey, SizeKey } from '../types'
@@ -31,6 +35,9 @@ export function Impressao({ api }: ImpressaoProps) {
     setIncludeBack,
     setPreviewFace,
   } = api
+  startLoadLgpWords()
+  const lgp = useSyncExternalStore(subscribeLgpWords, getLgpWordsSnapshot, getLgpWordsSnapshot)
+  const lgpWords = lgp.kind === 'ready' ? lgp.words : null
   const mob = vw < 640
   const narrow = vw < 960
   const list = cards ?? []
@@ -107,7 +114,7 @@ export function Impressao({ api }: ImpressaoProps) {
 
         <Panel
           title="Verso com gesto"
-          subtitle="Imprime uma segunda página com a ilustração do gesto de cada palavra (o vídeo fica acessível por QR). Para impressão duplex."
+          subtitle="Imprime uma segunda página com a ilustração do gesto. Quando há gesto LGP associado, junta um QR para o vídeo na Infopédia. Para impressão duplex."
         >
           <Toggle
             on={includeBack}
@@ -154,6 +161,7 @@ export function Impressao({ api }: ImpressaoProps) {
         verso={previewVerso}
         mob={mob}
         narrow={narrow}
+        lgpWords={lgpWords}
         header={
           <>
             <span style={{ fontSize: 14, fontWeight: 800, color: '#6c5fa6' }}>Picta</span>
@@ -179,6 +187,7 @@ export function Impressao({ api }: ImpressaoProps) {
         verso={false}
         mob={mob}
         narrow={narrow}
+        lgpWords={lgpWords}
         header={
           <>
             <span style={{ fontSize: 14, fontWeight: 800, color: '#6c5fa6' }}>Picta</span>
@@ -195,6 +204,7 @@ export function Impressao({ api }: ImpressaoProps) {
           verso
           mob={mob}
           narrow={narrow}
+          lgpWords={lgpWords}
           header={
             <>
               <span style={{ fontSize: 14, fontWeight: 800, color: '#6c5fa6' }}>Picta</span>
@@ -216,9 +226,10 @@ interface SheetProps {
   mob: boolean
   narrow: boolean
   header: React.ReactNode
+  lgpWords: string[] | null
 }
 
-function Sheet({ className, cards, size, contrast, verso, mob, narrow, header }: SheetProps) {
+function Sheet({ className, cards, size, contrast, verso, mob, narrow, header, lgpWords }: SheetProps) {
   const sz = SIZE_MAP[size]
   return (
     <div
@@ -247,7 +258,14 @@ function Sheet({ className, cards, size, contrast, verso, mob, narrow, header }:
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${sz.cols},1fr)`, gap: 12 }}>
         {cards.map((c) => (
-          <SheetCard key={c.id} card={c} size={size} contrast={contrast} verso={verso} />
+          <SheetCard
+            key={c.id}
+            card={c}
+            size={size}
+            contrast={contrast}
+            verso={verso}
+            lgpWords={lgpWords}
+          />
         ))}
       </div>
       <div
@@ -340,16 +358,25 @@ function SheetCard({
   size,
   contrast,
   verso,
+  lgpWords,
 }: {
   card: Card
   size: SizeKey
   contrast: boolean
   verso: boolean
+  lgpWords: string[] | null
 }) {
   const sz = SIZE_MAP[size]
   const f = FUNCS[card.func as FuncKey]
   const photoFront = !verso && card.source === 'photo' && card.photoUrl
   const picto = card.pictoCandidates?.[card.pictoIndex]
+  const qr = resolveQrTarget(card, lgpWords)
+  const captionLabel =
+    qr?.kind === 'video'
+      ? `vídeo: ${qr.host.toLowerCase()}`
+      : qr?.kind === 'lgp' && qr.slug !== card.word.toLowerCase()
+        ? `gesto: ${qr.slug}`
+        : null
 
   const bandStyle = contrast
     ? {
@@ -414,7 +441,7 @@ function SheetCard({
                 alt=""
                 style={{ maxWidth: '88%', maxHeight: sz.art, objectFit: 'contain' }}
               />
-            ) : (
+            ) : qr ? null : (
               <div
                 style={{
                   fontFamily: 'monospace',
@@ -427,10 +454,27 @@ function SheetCard({
               >
                 gesto
                 <br />
-                ilustração ou vídeo
+                ilustração ou QR
               </div>
             )}
-            <QrPlaceholder size={Math.round(sz.art * 0.26)} />
+            {qr && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 5,
+                  right: 5,
+                  background: '#fff',
+                  padding: 2,
+                  borderRadius: 3,
+                  lineHeight: 0,
+                }}
+              >
+                <QrSvg
+                  data={qr.url}
+                  size={Math.round(sz.art * (card.gestureImg ? 0.32 : 0.62))}
+                />
+              </div>
+            )}
           </>
         ) : photoFront ? (
           <img
@@ -451,12 +495,26 @@ function SheetCard({
           fontSize: sz.word,
           color: '#000',
           textAlign: 'center',
-          padding: 6,
+          padding: verso && captionLabel ? '6px 6px 2px' : 6,
           borderTop: `${contrast ? 3 : 1}px solid ${contrast ? '#000' : '#ece8f2'}`,
           background: '#fff',
         }}
       >
         {card.word}
+        {verso && captionLabel && (
+          <div
+            style={{
+              fontSize: Math.max(7, Math.round(sz.word * 0.42)),
+              fontWeight: 500,
+              color: '#6f6a7d',
+              letterSpacing: '0.02em',
+              marginTop: 2,
+              paddingBottom: 4,
+            }}
+          >
+            {captionLabel}
+          </div>
+        )}
       </div>
     </div>
   )

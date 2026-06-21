@@ -20,7 +20,17 @@ function loadCollections(): Collection[] {
     const raw = localStorage.getItem(LS_COLLECTIONS)
     if (!raw) return []
     const arr = JSON.parse(raw) as Collection[]
-    return Array.isArray(arr) ? arr : []
+    if (!Array.isArray(arr)) return []
+    // Migrate cards stored before the LGP rework: the old shape had
+    // `gestureVideoUrl` / `gestureVideoName`; we now keep `gestureLgpSlug`.
+    return arr.map((col) => ({
+      ...col,
+      cards: (col.cards ?? []).map((c) => ({
+        ...c,
+        gestureLgpSlug: c.gestureLgpSlug ?? null,
+        gestureVideoUrl: c.gestureVideoUrl ?? null,
+      })),
+    }))
   } catch {
     return []
   }
@@ -49,8 +59,8 @@ export function buildCards(wordsText: string): Card[] {
       pictoCandidates: null,
       photoUrl: null,
       gestureImg: null,
+      gestureLgpSlug: null,
       gestureVideoUrl: null,
-      gestureVideoName: null,
     }))
 }
 
@@ -68,8 +78,8 @@ function cardsFromGlobal(g: GlobalCollection): Card[] {
     pictoCandidates: [{ id: c.arasaacId, url: pictoUrl(c.arasaacId), keyword: c.word }],
     photoUrl: null,
     gestureImg: null,
+    gestureLgpSlug: null,
     gestureVideoUrl: null,
-    gestureVideoName: null,
   }))
 }
 
