@@ -95,6 +95,12 @@ if (await versoTab.isVisible().catch(() => false)) {
 }
 await page.screenshot({ path: 'screenshots/lgp-verify/07-impressao-verso.png', fullPage: true })
 
+// Zoomed-in shot of the casa card so we can eyeball the stylized QR.
+const casaCard = page.locator('.print-sheet >> text=casa').first()
+const casaParent = casaCard.locator('xpath=ancestor::div[2]')
+await casaParent.scrollIntoViewIfNeeded()
+await casaParent.screenshot({ path: 'screenshots/lgp-verify/08-qr-zoom.png' })
+
 if (errors.length) {
   console.log('--- ERRORS ---')
   for (const e of errors) console.log(e)
