@@ -70,13 +70,15 @@ export function QrSvg({ data, size, margin = 2 }: QrSvgProps) {
   const plateY = logo.y - platePad
   const plateSide = logo.side + platePad * 2
 
-  // The Picta tile mark is a 32x32 grid (4 tiles of 14, with 4u gaps), see
-  // public/picta.svg. We inline it scaled into the plate area, centred.
+  // Inline the Picta tile mark from public/picta.svg, scaled to the plate.
+  // The source SVG is 64x64 with the four 14x14 tiles laid out as a 32x32
+  // block centred inside it (offset 16 on each axis, 4u gap). Keeping u as
+  // markSide/64 preserves those proportions exactly.
   const markPad = 0.5
   const markX = logo.x + markPad
   const markY = logo.y + markPad
   const markSide = logo.side - markPad * 2
-  const u = markSide / 32
+  const u = markSide / 64
 
   return (
     <svg
@@ -119,10 +121,10 @@ export function QrSvg({ data, size, margin = 2 }: QrSvgProps) {
           y={markY}
           width={markSide}
           height={markSide}
-          rx={markSide * 0.22}
+          rx={14 * u}
           fill={BRAND}
         />
-        <g transform={`translate(${markX + 8 * u} ${markY + 8 * u})`}>
+        <g transform={`translate(${markX + 16 * u} ${markY + 16 * u})`}>
           <rect x={0} y={0} width={14 * u} height={14 * u} rx={2 * u} fill="#ffffff" />
           <rect x={18 * u} y={0} width={14 * u} height={14 * u} rx={2 * u} fill="#c9c0e6" />
           <rect x={0} y={18 * u} width={14 * u} height={14 * u} rx={2 * u} fill="#c9c0e6" />
