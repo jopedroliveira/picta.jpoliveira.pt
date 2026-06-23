@@ -3,6 +3,8 @@ import { FuncIcon, ImageIcon, PlusIcon } from '../icons'
 import type { UsePictaApi } from '../state'
 import { FUNCS } from '../theme'
 import type { Card, FuncKey } from '../types'
+import { GestureLgpField } from './GestureLgpField'
+import { GestureVideoUrlField } from './GestureVideoUrlField'
 
 interface CardEditorProps {
   api: UsePictaApi
@@ -302,7 +304,7 @@ export function CardEditor({ api, card }: CardEditorProps) {
           <section>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Verso — gesto</div>
             <div style={{ fontSize: 12, color: '#9a93aa', marginBottom: 12 }}>
-              Apoio multimodal: a ilustração imprime-se no verso; o vídeo fica acessível por QR.
+              Apoio multimodal: a ilustração imprime-se no verso; o vídeo da Infopédia fica acessível por QR.
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
@@ -376,90 +378,8 @@ export function CardEditor({ api, card }: CardEditorProps) {
                 )}
               </div>
 
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#6f6a7d', marginBottom: 7 }}>
-                  Vídeo do gesto
-                </div>
-                {card.gestureVideoUrl ? (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      border: '1px solid #e4dff0',
-                      borderRadius: 12,
-                      padding: 10,
-                    }}
-                  >
-                    <video
-                      src={card.gestureVideoUrl}
-                      muted
-                      style={{
-                        width: 72,
-                        height: 56,
-                        objectFit: 'cover',
-                        background: '#161320',
-                        borderRadius: 8,
-                      }}
-                    />
-                    <span
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                        fontSize: 13,
-                        color: '#2a2733',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {card.gestureVideoName}
-                    </span>
-                    <button
-                      onClick={() => updateCard(card.id, { gestureVideoUrl: null, gestureVideoName: null })}
-                      style={{
-                        border: 'none',
-                        background: 'none',
-                        color: '#C0453B',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      Remover
-                    </button>
-                  </div>
-                ) : (
-                  <label
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      border: '1px dashed #d7d0e4',
-                      borderRadius: 12,
-                      padding: '13px 14px',
-                      cursor: 'pointer',
-                      background: '#faf9fc',
-                    }}
-                  >
-                    <input
-                      type="file"
-                      accept="video/*"
-                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                        readFile(e.target.files?.[0], (url, file) =>
-                          updateCard(card.id, { gestureVideoUrl: url, gestureVideoName: file.name }),
-                        )
-                      }
-                      style={{ display: 'none' }}
-                    />
-                    <PlusIcon size={18} color="#6c5fa6" />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#6c5fa6' }}>
-                      Carregar vídeo do gesto
-                    </span>
-                  </label>
-                )}
-              </div>
+              <GestureLgpField key={card.id} card={card} updateCard={updateCard} />
+              <GestureVideoUrlField key={`v-${card.id}`} card={card} updateCard={updateCard} />
             </div>
           </section>
 

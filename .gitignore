@@ -15,6 +15,9 @@ dist-ssr
 # local-only browser test artifacts
 screenshots
 
+# LGP scraper resume state (regenerated on each scrape run)
+scripts/.lgp-progress.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,7 +1,10 @@
+import { useSyncExternalStore } from 'react'
 import type { UsePictaApi } from '../state'
 import { FUNCS } from '../theme'
 import { FuncIcon, PictoPlaceholder } from '../icons'
 import type { Card } from '../types'
+import { getLgpWordsSnapshot, startLoadLgpWords, subscribeLgpWords } from '../lgp'
+import { cardHasLgpSupport, videoHostLabel } from '../gestureUrl'
 
 interface RevisaoProps {
   api: UsePictaApi
@@ -64,6 +67,9 @@ function CardArt({ card }: { card: Card }) {
 
 export function Revisao({ api }: RevisaoProps) {
   const { cards, vw, go, openEditor } = api
+  startLoadLgpWords()
+  const lgp = useSyncExternalStore(subscribeLgpWords, getLgpWordsSnapshot, getLgpWordsSnapshot)
+  const lgpWords = lgp.kind === 'ready' ? lgp.words : null
   const mob = vw < 640
   const narrow = vw < 960
   const list = cards ?? []
@@ -96,8 +102,8 @@ export function Revisao({ api }: RevisaoProps) {
             Confirme cada cartão
           </h1>
           <p style={{ fontSize: 15, color: '#6f6a7d', margin: 0, maxWidth: 620 }}>
-            Toque num cartão para editar: trocar o pictograma, usar uma foto sua, ou anexar a ilustração e o vídeo
-            do gesto.
+            Toque num cartão para editar: trocar o pictograma, usar uma foto sua, ou associar o gesto LGP da
+            Infopédia.
           </p>
         </div>
         <button
@@ -131,7 +137,9 @@ export function Revisao({ api }: RevisaoProps) {
           const f = FUNCS[c.func]
           const gestureBits: string[] = []
           if (c.gestureImg) gestureBits.push('ilustração')
-          if (c.gestureVideoUrl) gestureBits.push('vídeo')
+          if (cardHasLgpSupport(c, lgpWords)) gestureBits.push('LGP')
+          const videoHost = c.gestureVideoUrl ? videoHostLabel(c.gestureVideoUrl) : null
+          if (videoHost) gestureBits.push(videoHost)
           const hasGesture = gestureBits.length > 0
           return (
             <button
@@ -234,8 +242,8 @@ export function Revisao({ api }: RevisaoProps) {
       </div>
 
       <p style={{ fontSize: 12, color: '#a39db3', marginTop: 32, lineHeight: 1.6, maxWidth: 600 }}>
-        Pictogramas: ARASAAC (Sergio Palao) · CC BY-NC-SA. As fotos, ilustrações e vídeos que adicionar ficam no
-        seu dispositivo.
+        Pictogramas: ARASAAC (Sergio Palao) · CC BY-NC-SA. As fotos e ilustrações que adicionar ficam no seu
+        dispositivo. Os gestos LGP vivem na Infopédia (Porto Editora).
       </p>
     </div>
   )

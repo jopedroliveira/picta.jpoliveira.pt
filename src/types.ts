@@ -28,8 +28,8 @@ export interface Card {
   pictoCandidates: PictoCandidate[] | null
   photoUrl: string | null
   gestureImg: string | null
+  gestureLgpSlug: string | null
   gestureVideoUrl: string | null
-  gestureVideoName: string | null
 }
 
 export interface Collection {
