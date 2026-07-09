@@ -49,6 +49,7 @@ export interface Collection {
   wordsText: string
   cards: Card[]
   savedAt: number
+  fitzgeraldEnabled: boolean
   fitzgeraldColorMode: FitzColorMode
 }
 

@@ -30,11 +30,13 @@ export function Impressao({ api }: ImpressaoProps) {
     contrast,
     includeBack,
     previewFace,
+    fitzgeraldEnabled,
     fitzgeraldColorMode,
     setSize,
     setContrast,
     setIncludeBack,
     setPreviewFace,
+    setFitzgeraldEnabled,
     setFitzgeraldColorMode,
   } = api
   startLoadLgpWords()
@@ -130,30 +132,37 @@ export function Impressao({ api }: ImpressaoProps) {
 
         <Panel
           title="Chave de Fitzgerald"
-          subtitle="Cor da categoria gramatical nos cartões que a têm ativa. Escolha se a cor pinta o cartão inteiro (sólido) ou apenas a moldura (contorno). Não afeta cartões sem categoria atribuída."
+          subtitle="Codificação por cor da categoria gramatical de cada cartão. Aplica-se a todo o baralho. Cartões sem categoria atribuída ficam intactos."
         >
-          <div style={{ display: 'flex', gap: 6 }}>
-            {(['border', 'solid'] as FitzColorMode[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => setFitzgeraldColorMode(m)}
-                style={{
-                  flex: 1,
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  padding: 9,
-                  borderRadius: 8,
-                  background: fitzgeraldColorMode === m ? '#6c5fa6' : '#f1eef8',
-                  color: fitzgeraldColorMode === m ? '#fff' : '#6f6a7d',
-                }}
-              >
-                {m === 'border' ? 'Contorno' : 'Sólido'}
-              </button>
-            ))}
-          </div>
+          <Toggle
+            on={fitzgeraldEnabled}
+            onClick={() => setFitzgeraldEnabled(!fitzgeraldEnabled)}
+            label={fitzgeraldEnabled ? 'Ativada' : 'Desativada'}
+          />
+          {fitzgeraldEnabled && (
+            <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+              {(['border', 'solid'] as FitzColorMode[]).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setFitzgeraldColorMode(m)}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    padding: 9,
+                    borderRadius: 8,
+                    background: fitzgeraldColorMode === m ? '#6c5fa6' : '#f1eef8',
+                    color: fitzgeraldColorMode === m ? '#fff' : '#6f6a7d',
+                  }}
+                >
+                  {m === 'border' ? 'Contorno' : 'Sólido'}
+                </button>
+              ))}
+            </div>
+          )}
         </Panel>
 
         <button
@@ -192,6 +201,7 @@ export function Impressao({ api }: ImpressaoProps) {
         mob={mob}
         narrow={narrow}
         lgpWords={lgpWords}
+        fitzOn={fitzgeraldEnabled}
         fitzMode={fitzgeraldColorMode}
         header={
           <>
@@ -219,6 +229,7 @@ export function Impressao({ api }: ImpressaoProps) {
         mob={mob}
         narrow={narrow}
         lgpWords={lgpWords}
+        fitzOn={fitzgeraldEnabled}
         fitzMode={fitzgeraldColorMode}
         header={
           <>
@@ -237,6 +248,7 @@ export function Impressao({ api }: ImpressaoProps) {
           mob={mob}
           narrow={narrow}
           lgpWords={lgpWords}
+          fitzOn={fitzgeraldEnabled}
           fitzMode={fitzgeraldColorMode}
           header={
             <>
@@ -260,10 +272,11 @@ interface SheetProps {
   narrow: boolean
   header: React.ReactNode
   lgpWords: string[] | null
+  fitzOn: boolean
   fitzMode: FitzColorMode
 }
 
-function Sheet({ className, cards, size, contrast, verso, mob, narrow, header, lgpWords, fitzMode }: SheetProps) {
+function Sheet({ className, cards, size, contrast, verso, mob, narrow, header, lgpWords, fitzOn, fitzMode }: SheetProps) {
   const sz = SIZE_MAP[size]
   return (
     <div
@@ -299,6 +312,7 @@ function Sheet({ className, cards, size, contrast, verso, mob, narrow, header, l
             contrast={contrast}
             verso={verso}
             lgpWords={lgpWords}
+            fitzOn={fitzOn}
             fitzMode={fitzMode}
           />
         ))}
@@ -394,6 +408,7 @@ function SheetCard({
   contrast,
   verso,
   lgpWords,
+  fitzOn,
   fitzMode,
 }: {
   card: Card
@@ -401,11 +416,12 @@ function SheetCard({
   contrast: boolean
   verso: boolean
   lgpWords: string[] | null
+  fitzOn: boolean
   fitzMode: FitzColorMode
 }) {
   const sz = SIZE_MAP[size]
   const f = FUNCS[card.func as FuncKey]
-  const fitz = card.fitzgeraldCategory ? FITZ[card.fitzgeraldCategory] : null
+  const fitz = fitzOn && card.fitzgeraldCategory ? FITZ[card.fitzgeraldCategory] : null
   const photoFront = !verso && card.source === 'photo' && card.photoUrl
   const picto = card.pictoCandidates?.[card.pictoIndex]
   const qr = resolveQrTarget(card, lgpWords)

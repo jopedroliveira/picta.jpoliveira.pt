@@ -27,6 +27,7 @@ function loadCollections(): Collection[] {
     // Also default in Fitzgerald fields for collections saved before that feature.
     return arr.map((col) => ({
       ...col,
+      fitzgeraldEnabled: col.fitzgeraldEnabled ?? false,
       fitzgeraldColorMode: col.fitzgeraldColorMode ?? 'border',
       cards: (col.cards ?? []).map((c) => ({
         ...c,
@@ -100,6 +101,7 @@ export interface UsePictaApi {
   previewFace: PreviewFace
   editingId: number | null
   editorTab: EditorTab
+  fitzgeraldEnabled: boolean
   fitzgeraldColorMode: FitzColorMode
   collections: Collection[]
   currentCollectionId: string | null
@@ -124,6 +126,7 @@ export interface UsePictaApi {
   setPreviewFace: (f: PreviewFace) => void
   setEditingId: (id: number | null) => void
   setEditorTab: (t: EditorTab) => void
+  setFitzgeraldEnabled: (b: boolean) => void
   setFitzgeraldColorMode: (m: FitzColorMode) => void
 
   // actions
@@ -152,6 +155,7 @@ export function usePicta(): UsePictaApi {
   const [previewFace, setPreviewFace] = useState<PreviewFace>('frente')
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editorTab, setEditorTab] = useState<EditorTab>('picto')
+  const [fitzgeraldEnabled, setFitzgeraldEnabled] = useState<boolean>(false)
   const [fitzgeraldColorMode, setFitzgeraldColorMode] = useState<FitzColorMode>('border')
   const [collections, setCollections] = useState<Collection[]>(() => loadCollections())
   const [currentCollectionId, setCurrentCollectionId] = useState<string | null>(null)
@@ -269,6 +273,7 @@ export function usePicta(): UsePictaApi {
         wordsText,
         cards: current,
         savedAt: now,
+        fitzgeraldEnabled,
         fitzgeraldColorMode,
       }
       const next = existing >= 0 ? prev.map((c, i) => (i === existing ? rec : c)) : [rec, ...prev]
@@ -278,13 +283,14 @@ export function usePicta(): UsePictaApi {
     })
     setJustSaved(true)
     setTimeout(() => setJustSaved(false), 1800)
-  }, [cards, collectionName, currentCollectionId, fitzgeraldColorMode, wordsText])
+  }, [cards, collectionName, currentCollectionId, fitzgeraldEnabled, fitzgeraldColorMode, wordsText])
 
   const openCollection = useCallback((col: Collection) => {
     setWordsTextRaw(col.wordsText || col.words.join('\n'))
     setCards(col.cards ?? null)
     setCurrentCollectionId(col.id)
     setCollectionName(col.name)
+    setFitzgeraldEnabled(col.fitzgeraldEnabled ?? false)
     setFitzgeraldColorMode(col.fitzgeraldColorMode ?? 'border')
     setScreen('revisao')
   }, [])
@@ -338,6 +344,7 @@ export function usePicta(): UsePictaApi {
     setCards(newCards)
     setCurrentCollectionId(null)
     setCollectionName(g.title + ' (cópia)')
+    setFitzgeraldEnabled(false)
     setFitzgeraldColorMode('border')
     setPreviewingGlobalId(null)
     setPreviewingGlobal(null)
@@ -355,6 +362,7 @@ export function usePicta(): UsePictaApi {
       previewFace,
       editingId,
       editorTab,
+      fitzgeraldEnabled,
       fitzgeraldColorMode,
       collections,
       currentCollectionId,
@@ -375,6 +383,7 @@ export function usePicta(): UsePictaApi {
       setPreviewFace,
       setEditingId,
       setEditorTab,
+      setFitzgeraldEnabled,
       setFitzgeraldColorMode,
       go,
       updateCard,
@@ -398,6 +407,7 @@ export function usePicta(): UsePictaApi {
       previewFace,
       editingId,
       editorTab,
+      fitzgeraldEnabled,
       fitzgeraldColorMode,
       collections,
       currentCollectionId,

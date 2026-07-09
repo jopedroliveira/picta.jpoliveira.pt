@@ -66,7 +66,7 @@ function CardArt({ card }: { card: Card }) {
 }
 
 export function Revisao({ api }: RevisaoProps) {
-  const { cards, vw, go, openEditor, fitzgeraldColorMode } = api
+  const { cards, vw, go, openEditor, fitzgeraldEnabled, fitzgeraldColorMode } = api
   startLoadLgpWords()
   const lgp = useSyncExternalStore(subscribeLgpWords, getLgpWordsSnapshot, getLgpWordsSnapshot)
   const lgpWords = lgp.kind === 'ready' ? lgp.words : null
@@ -135,7 +135,7 @@ export function Revisao({ api }: RevisaoProps) {
       >
         {list.map((c) => {
           const f = FUNCS[c.func]
-          const fitz = c.fitzgeraldCategory ? FITZ[c.fitzgeraldCategory] : null
+          const fitz = fitzgeraldEnabled && c.fitzgeraldCategory ? FITZ[c.fitzgeraldCategory] : null
           const solid = fitz && fitzgeraldColorMode === 'solid'
           const gestureBits: string[] = []
           if (c.gestureImg) gestureBits.push('ilustração')
