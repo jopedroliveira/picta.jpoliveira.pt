@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import type { UsePictaApi } from '../state'
-import { FUNCS } from '../theme'
+import { FITZ, FUNCS } from '../theme'
 import { FuncIcon, PictoPlaceholder } from '../icons'
 import type { Card } from '../types'
 import { getLgpWordsSnapshot, startLoadLgpWords, subscribeLgpWords } from '../lgp'
@@ -66,7 +66,7 @@ function CardArt({ card }: { card: Card }) {
 }
 
 export function Revisao({ api }: RevisaoProps) {
-  const { cards, vw, go, openEditor } = api
+  const { cards, vw, go, openEditor, fitzgeraldColorMode } = api
   startLoadLgpWords()
   const lgp = useSyncExternalStore(subscribeLgpWords, getLgpWordsSnapshot, getLgpWordsSnapshot)
   const lgpWords = lgp.kind === 'ready' ? lgp.words : null
@@ -135,6 +135,8 @@ export function Revisao({ api }: RevisaoProps) {
       >
         {list.map((c) => {
           const f = FUNCS[c.func]
+          const fitz = c.fitzgeraldCategory ? FITZ[c.fitzgeraldCategory] : null
+          const solid = fitz && fitzgeraldColorMode === 'solid'
           const gestureBits: string[] = []
           if (c.gestureImg) gestureBits.push('ilustração')
           if (cardHasLgpSupport(c, lgpWords)) gestureBits.push('LGP')
@@ -151,7 +153,9 @@ export function Revisao({ api }: RevisaoProps) {
                 cursor: 'pointer',
                 fontFamily: 'inherit',
                 background: '#fff',
-                border: '2px solid #2a2733',
+                border: `${fitz && fitzgeraldColorMode === 'border' ? 3 : 2}px solid ${
+                  fitz && fitzgeraldColorMode === 'border' ? fitz.color : '#2a2733'
+                }`,
                 borderRadius: 16,
                 overflow: 'hidden',
                 display: 'flex',
@@ -161,7 +165,7 @@ export function Revisao({ api }: RevisaoProps) {
             >
               <div
                 style={{
-                  background: f.color,
+                  background: fitz ? fitz.dark : f.color,
                   padding: '8px 13px',
                   display: 'flex',
                   alignItems: 'center',
@@ -187,7 +191,7 @@ export function Revisao({ api }: RevisaoProps) {
               </div>
               <div
                 style={{
-                  background: '#f7f5fb',
+                  background: solid ? fitz.color : '#f7f5fb',
                   height: 148,
                   display: 'flex',
                   alignItems: 'center',

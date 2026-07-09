@@ -5,6 +5,7 @@ import type {
   Card,
   Collection,
   EditorTab,
+  FitzColorMode,
   GlobalCollection,
   GlobalCollectionIndex,
   GlobalCollectionMeta,
@@ -23,12 +24,15 @@ function loadCollections(): Collection[] {
     if (!Array.isArray(arr)) return []
     // Migrate cards stored before the LGP rework: the old shape had
     // `gestureVideoUrl` / `gestureVideoName`; we now keep `gestureLgpSlug`.
+    // Also default in Fitzgerald fields for collections saved before that feature.
     return arr.map((col) => ({
       ...col,
+      fitzgeraldColorMode: col.fitzgeraldColorMode ?? 'border',
       cards: (col.cards ?? []).map((c) => ({
         ...c,
         gestureLgpSlug: c.gestureLgpSlug ?? null,
         gestureVideoUrl: c.gestureVideoUrl ?? null,
+        fitzgeraldCategory: c.fitzgeraldCategory ?? null,
       })),
     }))
   } catch {
@@ -61,6 +65,7 @@ export function buildCards(wordsText: string): Card[] {
       gestureImg: null,
       gestureLgpSlug: null,
       gestureVideoUrl: null,
+      fitzgeraldCategory: null,
     }))
 }
 
@@ -80,6 +85,7 @@ function cardsFromGlobal(g: GlobalCollection): Card[] {
     gestureImg: null,
     gestureLgpSlug: null,
     gestureVideoUrl: null,
+    fitzgeraldCategory: null,
   }))
 }
 
@@ -94,6 +100,7 @@ export interface UsePictaApi {
   previewFace: PreviewFace
   editingId: number | null
   editorTab: EditorTab
+  fitzgeraldColorMode: FitzColorMode
   collections: Collection[]
   currentCollectionId: string | null
   collectionName: string
@@ -117,6 +124,7 @@ export interface UsePictaApi {
   setPreviewFace: (f: PreviewFace) => void
   setEditingId: (id: number | null) => void
   setEditorTab: (t: EditorTab) => void
+  setFitzgeraldColorMode: (m: FitzColorMode) => void
 
   // actions
   go: (screen: Screen) => void
@@ -144,6 +152,7 @@ export function usePicta(): UsePictaApi {
   const [previewFace, setPreviewFace] = useState<PreviewFace>('frente')
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editorTab, setEditorTab] = useState<EditorTab>('picto')
+  const [fitzgeraldColorMode, setFitzgeraldColorMode] = useState<FitzColorMode>('border')
   const [collections, setCollections] = useState<Collection[]>(() => loadCollections())
   const [currentCollectionId, setCurrentCollectionId] = useState<string | null>(null)
   const [collectionName, setCollectionName] = useState<string>('')
@@ -253,7 +262,15 @@ export function usePicta(): UsePictaApi {
     setCollections((prev) => {
       const existing = currentCollectionId != null ? prev.findIndex((c) => c.id === currentCollectionId) : -1
       const id = currentCollectionId ?? 'col_' + now
-      const rec: Collection = { id, name, words, wordsText, cards: current, savedAt: now }
+      const rec: Collection = {
+        id,
+        name,
+        words,
+        wordsText,
+        cards: current,
+        savedAt: now,
+        fitzgeraldColorMode,
+      }
       const next = existing >= 0 ? prev.map((c, i) => (i === existing ? rec : c)) : [rec, ...prev]
       persistCollections(next)
       setCurrentCollectionId(id)
@@ -261,13 +278,14 @@ export function usePicta(): UsePictaApi {
     })
     setJustSaved(true)
     setTimeout(() => setJustSaved(false), 1800)
-  }, [cards, collectionName, currentCollectionId, wordsText])
+  }, [cards, collectionName, currentCollectionId, fitzgeraldColorMode, wordsText])
 
   const openCollection = useCallback((col: Collection) => {
     setWordsTextRaw(col.wordsText || col.words.join('\n'))
     setCards(col.cards ?? null)
     setCurrentCollectionId(col.id)
     setCollectionName(col.name)
+    setFitzgeraldColorMode(col.fitzgeraldColorMode ?? 'border')
     setScreen('revisao')
   }, [])
 
@@ -320,6 +338,7 @@ export function usePicta(): UsePictaApi {
     setCards(newCards)
     setCurrentCollectionId(null)
     setCollectionName(g.title + ' (cópia)')
+    setFitzgeraldColorMode('border')
     setPreviewingGlobalId(null)
     setPreviewingGlobal(null)
     setScreen('revisao')
@@ -336,6 +355,7 @@ export function usePicta(): UsePictaApi {
       previewFace,
       editingId,
       editorTab,
+      fitzgeraldColorMode,
       collections,
       currentCollectionId,
       collectionName,
@@ -355,6 +375,7 @@ export function usePicta(): UsePictaApi {
       setPreviewFace,
       setEditingId,
       setEditorTab,
+      setFitzgeraldColorMode,
       go,
       updateCard,
       loadExample,
@@ -377,6 +398,7 @@ export function usePicta(): UsePictaApi {
       previewFace,
       editingId,
       editorTab,
+      fitzgeraldColorMode,
       collections,
       currentCollectionId,
       collectionName,

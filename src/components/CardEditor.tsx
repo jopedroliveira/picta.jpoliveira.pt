@@ -1,8 +1,8 @@
 import type { ChangeEvent } from 'react'
 import { FuncIcon, ImageIcon, PlusIcon } from '../icons'
 import type { UsePictaApi } from '../state'
-import { FUNCS } from '../theme'
-import type { Card, FuncKey } from '../types'
+import { FITZ, FITZ_ORDER, FUNCS } from '../theme'
+import type { Card, FitzKey, FuncKey } from '../types'
 import { GestureLgpField } from './GestureLgpField'
 import { GestureVideoUrlField } from './GestureVideoUrlField'
 
@@ -301,6 +301,8 @@ export function CardEditor({ api, card }: CardEditorProps) {
             </div>
           </section>
 
+          <FitzgeraldSection card={card} onChange={(next) => updateCard(card.id, { fitzgeraldCategory: next })} />
+
           <section>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Verso — gesto</div>
             <div style={{ fontSize: 12, color: '#9a93aa', marginBottom: 12 }}>
@@ -402,6 +404,115 @@ export function CardEditor({ api, card }: CardEditorProps) {
         </div>
       </div>
     </div>
+  )
+}
+
+function FitzgeraldSection({
+  card,
+  onChange,
+}: {
+  card: Card
+  onChange: (next: FitzKey | null) => void
+}) {
+  const on = card.fitzgeraldCategory != null
+  return (
+    <section>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          marginBottom: 4,
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 700 }}>Categoria Fitzgerald</div>
+        <button
+          onClick={() => onChange(on ? null : 'substantivos')}
+          aria-pressed={on}
+          style={{
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            background: on ? '#e7e3f1' : '#f1eef8',
+            borderRadius: 20,
+            padding: '4px 10px 4px 4px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <span
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: on ? '#6c5fa6' : '#fff',
+              boxShadow: '0 1px 3px rgba(40,30,60,.2)',
+              flex: 'none',
+              transition: '.15s',
+            }}
+          />
+          <span style={{ fontSize: 12, fontWeight: 600, color: on ? '#2a2733' : '#9a93aa' }}>
+            {on ? 'Ativa' : 'Desativada'}
+          </span>
+        </button>
+      </div>
+      <div style={{ fontSize: 12, color: '#9a93aa', marginBottom: 12, lineHeight: 1.4 }}>
+        Codificação por cor da categoria gramatical. Opcional; ativar só quando fizer sentido para
+        quem usa o cartão.
+      </div>
+      {on && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
+          {FITZ_ORDER.map((key) => {
+            const f = FITZ[key]
+            const active = card.fitzgeraldCategory === key
+            return (
+              <button
+                key={key}
+                onClick={() => onChange(key)}
+                aria-pressed={active}
+                title={f.label}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 6,
+                  border: `2px solid ${active ? '#2a2733' : '#e7e3f1'}`,
+                  background: '#fff',
+                  borderRadius: 12,
+                  padding: '10px 6px',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <span
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    background: f.color,
+                    border: key === 'misc' ? '1px solid #b8b2c4' : 'none',
+                    boxShadow: active ? '0 0 0 2px #fff inset, 0 0 0 3px #2a2733' : 'none',
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: active ? '#2a2733' : '#6f6a7d',
+                    textAlign: 'center',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {f.short}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </section>
   )
 }
 
