@@ -1,8 +1,8 @@
 import type { ChangeEvent } from 'react'
 import { FuncIcon, ImageIcon, PlusIcon } from '../icons'
 import type { UsePictaApi } from '../state'
-import { FUNCS } from '../theme'
-import type { Card, FuncKey } from '../types'
+import { FITZ, FITZ_ORDER, FUNCS } from '../theme'
+import type { Card, FitzKey, FuncKey } from '../types'
 import { GestureLgpField } from './GestureLgpField'
 import { GestureVideoUrlField } from './GestureVideoUrlField'
 
@@ -19,7 +19,15 @@ function readFile(file: File | undefined, onLoad: (url: string, file: File) => v
 }
 
 export function CardEditor({ api, card }: CardEditorProps) {
-  const { editorTab, vw, setEditorTab, closeEditor, updateCard } = api
+  const {
+    editorTab,
+    vw,
+    fitzgeraldEnabled,
+    setEditorTab,
+    closeEditor,
+    updateCard,
+    setFitzgeraldEnabled,
+  } = api
   const mob = vw < 640
   const useFull = mob
 
@@ -301,6 +309,18 @@ export function CardEditor({ api, card }: CardEditorProps) {
             </div>
           </section>
 
+          <FitzgeraldSection
+            card={card}
+            enabled={fitzgeraldEnabled}
+            onChange={(next) => {
+              updateCard(card.id, { fitzgeraldCategory: next })
+              // Atribuir uma categoria liga a chave para o baralho todo; assim
+              // o utilizador vê o efeito imediato na revisão sem passar pela
+              // página de impressão.
+              if (next != null && !fitzgeraldEnabled) setFitzgeraldEnabled(true)
+            }}
+          />
+
           <section>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Verso — gesto</div>
             <div style={{ fontSize: 12, color: '#9a93aa', marginBottom: 12 }}>
@@ -402,6 +422,122 @@ export function CardEditor({ api, card }: CardEditorProps) {
         </div>
       </div>
     </div>
+  )
+}
+
+function FitzgeraldSection({
+  card,
+  enabled,
+  onChange,
+}: {
+  card: Card
+  enabled: boolean
+  onChange: (next: FitzKey | null) => void
+}) {
+  const noneActive = card.fitzgeraldCategory == null
+  return (
+    <section>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Categoria Fitzgerald</div>
+      <div style={{ fontSize: 12, color: '#9a93aa', marginBottom: 12, lineHeight: 1.4 }}>
+        {enabled
+          ? 'Escolha a categoria gramatical do cartão. A cor aparece no cartão impresso.'
+          : 'Escolha a categoria gramatical do cartão. A chave de Fitzgerald está desligada no baralho; ative-a na página de impressão para ver a cor.'}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
+        {FITZ_ORDER.map((key) => {
+          const f = FITZ[key]
+          const active = card.fitzgeraldCategory === key
+          return (
+            <button
+              key={key}
+              onClick={() => onChange(key)}
+              aria-pressed={active}
+              title={f.label}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 6,
+                border: `2px solid ${active ? '#2a2733' : '#e7e3f1'}`,
+                background: '#fff',
+                borderRadius: 12,
+                padding: '10px 6px',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              <span
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  background: f.color,
+                  border: key === 'misc' ? '1px solid #b8b2c4' : 'none',
+                  boxShadow: active ? '0 0 0 2px #fff inset, 0 0 0 3px #2a2733' : 'none',
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: active ? '#2a2733' : '#6f6a7d',
+                  textAlign: 'center',
+                  lineHeight: 1.2,
+                }}
+              >
+                {f.short}
+              </span>
+            </button>
+          )
+        })}
+        <button
+          onClick={() => onChange(null)}
+          aria-pressed={noneActive}
+          title="Sem categoria"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 6,
+            border: `2px solid ${noneActive ? '#2a2733' : '#e7e3f1'}`,
+            background: '#fff',
+            borderRadius: 12,
+            padding: '10px 6px',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          <span
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              background: '#fff',
+              border: '2px dashed #b8b2c4',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#b8b2c4',
+              fontSize: 18,
+              boxShadow: noneActive ? '0 0 0 2px #fff inset, 0 0 0 3px #2a2733' : 'none',
+            }}
+          >
+            —
+          </span>
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: noneActive ? '#2a2733' : '#6f6a7d',
+              textAlign: 'center',
+              lineHeight: 1.2,
+            }}
+          >
+            Sem categoria
+          </span>
+        </button>
+      </div>
+    </section>
   )
 }
 

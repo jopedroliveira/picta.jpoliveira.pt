@@ -1,4 +1,4 @@
-import type { CtxKey, FuncKey, SizeKey } from './types'
+import type { CtxKey, FitzKey, FuncKey, SizeKey } from './types'
 
 export interface FuncDef {
   label: string
@@ -63,3 +63,34 @@ export function guessCtx(word: string): CtxKey {
 }
 
 export const CHIP_COLORS = ['#efe9fb', '#fbeede', '#e3f0f2', '#e4f1e9']
+
+export interface FitzDef {
+  label: string
+  short: string
+  color: string
+  dark: string
+  ink: string
+}
+
+// Cores standard da Chave de Fitzgerald. Cada categoria tem cor base (fundo do
+// cartão em modo solid, ou moldura em modo border), tom escuro (topo/faixa) e
+// ink (cor do texto sobre a cor base).
+export const FITZ: Record<FitzKey, FitzDef> = {
+  pessoas:      { label: 'Pessoas/pronomes',    short: 'Pessoas',    color: '#FFD400', dark: '#8a6d00', ink: '#1a1208' },
+  verbos:       { label: 'Verbos',              short: 'Verbos',     color: '#43A047', dark: '#1e5b21', ink: '#ffffff' },
+  descritivos:  { label: 'Descritivos',         short: 'Descritivos',color: '#1E88E5', dark: '#0b3d75', ink: '#ffffff' },
+  substantivos: { label: 'Substantivos',        short: 'Substantivos',color: '#FB8C00', dark: '#8a4a00', ink: '#1a1208' },
+  preposicoes:  { label: 'Preposições',         short: 'Preposições',color: '#8E24AA', dark: '#4a0d5c', ink: '#ffffff' },
+  social:       { label: 'Social',              short: 'Social',     color: '#F06292', dark: '#8a1d4a', ink: '#ffffff' },
+  misc:         { label: 'Negação / miscelânea',short: 'Negação',    color: '#E0E0E0', dark: '#5c5c5c', ink: '#1a1208' },
+}
+
+export const FITZ_ORDER: FitzKey[] = [
+  'pessoas',
+  'verbos',
+  'descritivos',
+  'substantivos',
+  'preposicoes',
+  'social',
+  'misc',
+]

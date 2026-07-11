@@ -4,8 +4,8 @@ import { QrSvg } from '../components/QrSvg'
 import { resolveQrTarget } from '../gestureUrl'
 import { getLgpWordsSnapshot, startLoadLgpWords, subscribeLgpWords } from '../lgp'
 import type { UsePictaApi } from '../state'
-import { FUNCS, SIZE_LABELS, SIZE_MAP } from '../theme'
-import type { Card, FuncKey, SizeKey } from '../types'
+import { FITZ, FUNCS, SIZE_LABELS, SIZE_MAP } from '../theme'
+import type { Card, FitzColorMode, FuncKey, SizeKey } from '../types'
 
 interface ImpressaoProps {
   api: UsePictaApi
@@ -30,10 +30,14 @@ export function Impressao({ api }: ImpressaoProps) {
     contrast,
     includeBack,
     previewFace,
+    fitzgeraldEnabled,
+    fitzgeraldColorMode,
     setSize,
     setContrast,
     setIncludeBack,
     setPreviewFace,
+    setFitzgeraldEnabled,
+    setFitzgeraldColorMode,
   } = api
   startLoadLgpWords()
   const lgp = useSyncExternalStore(subscribeLgpWords, getLgpWordsSnapshot, getLgpWordsSnapshot)
@@ -126,6 +130,41 @@ export function Impressao({ api }: ImpressaoProps) {
           />
         </Panel>
 
+        <Panel
+          title="Chave de Fitzgerald"
+          subtitle="Codificação por cor da categoria gramatical de cada cartão. Aplica-se a todo o baralho. Cartões sem categoria atribuída ficam intactos."
+        >
+          <Toggle
+            on={fitzgeraldEnabled}
+            onClick={() => setFitzgeraldEnabled(!fitzgeraldEnabled)}
+            label={fitzgeraldEnabled ? 'Ativada' : 'Desativada'}
+          />
+          {fitzgeraldEnabled && (
+            <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+              {(['border', 'solid'] as FitzColorMode[]).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setFitzgeraldColorMode(m)}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    padding: 9,
+                    borderRadius: 8,
+                    background: fitzgeraldColorMode === m ? '#6c5fa6' : '#f1eef8',
+                    color: fitzgeraldColorMode === m ? '#fff' : '#6f6a7d',
+                  }}
+                >
+                  {m === 'border' ? 'Contorno' : 'Sólido'}
+                </button>
+              ))}
+            </div>
+          )}
+        </Panel>
+
         <button
           onClick={() => window.print()}
           style={{
@@ -162,6 +201,8 @@ export function Impressao({ api }: ImpressaoProps) {
         mob={mob}
         narrow={narrow}
         lgpWords={lgpWords}
+        fitzOn={fitzgeraldEnabled}
+        fitzMode={fitzgeraldColorMode}
         header={
           <>
             <span style={{ fontSize: 14, fontWeight: 800, color: '#6c5fa6' }}>Picta</span>
@@ -188,6 +229,8 @@ export function Impressao({ api }: ImpressaoProps) {
         mob={mob}
         narrow={narrow}
         lgpWords={lgpWords}
+        fitzOn={fitzgeraldEnabled}
+        fitzMode={fitzgeraldColorMode}
         header={
           <>
             <span style={{ fontSize: 14, fontWeight: 800, color: '#6c5fa6' }}>Picta</span>
@@ -205,6 +248,8 @@ export function Impressao({ api }: ImpressaoProps) {
           mob={mob}
           narrow={narrow}
           lgpWords={lgpWords}
+          fitzOn={fitzgeraldEnabled}
+          fitzMode={fitzgeraldColorMode}
           header={
             <>
               <span style={{ fontSize: 14, fontWeight: 800, color: '#6c5fa6' }}>Picta</span>
@@ -227,9 +272,11 @@ interface SheetProps {
   narrow: boolean
   header: React.ReactNode
   lgpWords: string[] | null
+  fitzOn: boolean
+  fitzMode: FitzColorMode
 }
 
-function Sheet({ className, cards, size, contrast, verso, mob, narrow, header, lgpWords }: SheetProps) {
+function Sheet({ className, cards, size, contrast, verso, mob, narrow, header, lgpWords, fitzOn, fitzMode }: SheetProps) {
   const sz = SIZE_MAP[size]
   return (
     <div
@@ -265,6 +312,8 @@ function Sheet({ className, cards, size, contrast, verso, mob, narrow, header, l
             contrast={contrast}
             verso={verso}
             lgpWords={lgpWords}
+            fitzOn={fitzOn}
+            fitzMode={fitzMode}
           />
         ))}
       </div>
@@ -359,15 +408,20 @@ function SheetCard({
   contrast,
   verso,
   lgpWords,
+  fitzOn,
+  fitzMode,
 }: {
   card: Card
   size: SizeKey
   contrast: boolean
   verso: boolean
   lgpWords: string[] | null
+  fitzOn: boolean
+  fitzMode: FitzColorMode
 }) {
   const sz = SIZE_MAP[size]
   const f = FUNCS[card.func as FuncKey]
+  const fitz = fitzOn && card.fitzgeraldCategory ? FITZ[card.fitzgeraldCategory] : null
   const photoFront = !verso && card.source === 'photo' && card.photoUrl
   const picto = card.pictoCandidates?.[card.pictoIndex]
   const qr = resolveQrTarget(card, lgpWords)
@@ -380,8 +434,8 @@ function SheetCard({
 
   const bandStyle = contrast
     ? {
-        background: f.hc,
-        color: f.hcText,
+        background: fitz ? fitz.dark : f.hc,
+        color: fitz ? '#fff' : f.hcText,
         fontWeight: 700,
         fontSize: sz.band + 5,
         textAlign: 'center' as const,
@@ -390,7 +444,7 @@ function SheetCard({
         borderBottom: '3px solid #000',
       }
     : {
-        background: f.color,
+        background: fitz ? fitz.dark : f.color,
         color: '#fff',
         fontWeight: 700,
         fontSize: Math.max(9, sz.band + 2),
@@ -400,9 +454,15 @@ function SheetCard({
         whiteSpace: 'nowrap' as const,
       }
 
+  const fitzSolidFront = fitz && fitzMode === 'solid' && !verso
+  const artBg = verso
+    ? 'repeating-linear-gradient(45deg,#eceaf2 0 9px,#f5f3fa 9px 18px)'
+    : fitzSolidFront
+      ? fitz.color
+      : '#fff'
   const artStyle = verso
     ? {
-        backgroundImage: 'repeating-linear-gradient(45deg,#eceaf2 0 9px,#f5f3fa 9px 18px)',
+        backgroundImage: artBg,
         height: sz.art + sz.padV * 2,
         boxSizing: 'border-box' as const,
         padding: `${sz.padV}px 0`,
@@ -412,7 +472,7 @@ function SheetCard({
         position: 'relative' as const,
       }
     : {
-        background: '#fff',
+        background: artBg,
         height: sz.art + sz.padV * 2,
         boxSizing: 'border-box' as const,
         padding: `${sz.padV}px 0`,
@@ -421,10 +481,14 @@ function SheetCard({
         justifyContent: 'center',
       }
 
+  const useFitzBorder = fitz && fitzMode === 'border' && !contrast
+  const borderColor = useFitzBorder ? fitz.color : '#000'
+  const borderWidth = useFitzBorder ? 5 : contrast ? 3 : 2
+
   return (
     <div
       style={{
-        border: `${contrast ? 3 : 2}px solid #000`,
+        border: `${borderWidth}px solid ${borderColor}`,
         borderRadius: 10,
         overflow: 'hidden',
         background: '#fff',
@@ -493,11 +557,11 @@ function SheetCard({
           fontFamily: "'Atkinson Hyperlegible',sans-serif",
           fontWeight: 700,
           fontSize: sz.word,
-          color: '#000',
+          color: fitzSolidFront ? fitz.ink : '#000',
           textAlign: 'center',
           padding: verso && captionLabel ? '6px 6px 2px' : 6,
-          borderTop: `${contrast ? 3 : 1}px solid ${contrast ? '#000' : '#ece8f2'}`,
-          background: '#fff',
+          borderTop: `${contrast ? 3 : 1}px solid ${contrast ? '#000' : fitzSolidFront ? fitz.dark : '#ece8f2'}`,
+          background: fitzSolidFront ? fitz.color : '#fff',
         }}
       >
         {card.word}

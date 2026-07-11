@@ -1,6 +1,15 @@
 export type FuncKey = 'pedir' | 'recusar' | 'escolher' | 'comentar'
 export type CtxKey = 'casa' | 'creche' | 'geral'
 export type CardSource = 'picto' | 'photo'
+export type FitzKey =
+  | 'pessoas'
+  | 'verbos'
+  | 'descritivos'
+  | 'substantivos'
+  | 'preposicoes'
+  | 'social'
+  | 'misc'
+export type FitzColorMode = 'border' | 'solid'
 export type Screen =
   | 'entrada'
   | 'revisao'
@@ -30,6 +39,7 @@ export interface Card {
   gestureImg: string | null
   gestureLgpSlug: string | null
   gestureVideoUrl: string | null
+  fitzgeraldCategory: FitzKey | null
 }
 
 export interface Collection {
@@ -39,6 +49,8 @@ export interface Collection {
   wordsText: string
   cards: Card[]
   savedAt: number
+  fitzgeraldEnabled: boolean
+  fitzgeraldColorMode: FitzColorMode
 }
 
 export interface GlobalCollectionMeta {
